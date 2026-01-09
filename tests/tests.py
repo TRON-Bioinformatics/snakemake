@@ -1633,6 +1633,8 @@ def test_module_nested():
         check_results=False,
     )
 
+def test_module_nesting_prefixed():
+    run(dpath("test_module_nesting_prefixed"), check_results=True)
 
 def test_modules_all_exclude_1():
     # Fail due to conflicting rules
