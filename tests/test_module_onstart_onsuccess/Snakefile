@@ -1,0 +1,64 @@
+"""
+Test proper onstart/onsuccsess/onerror handling when using submodules.
+"""
+
+import os
+import yaml
+
+config = {
+    "file_contents": "Output of total workflow.",
+    "success_message": "Whole workflow finished successfully.",
+}
+
+
+onstart:
+    config_dir = "config"
+
+    if not os.path.exists(config_dir):
+        os.mkdir(config_dir)
+        
+    
+    config_path = os.path.join(config_dir, "workflow_config.yaml")
+
+    with open(config_path, "w+") as configfile:
+        yaml.dump(config, configfile)
+
+
+onsuccess:
+    message_dir = "success"
+
+    if not os.path.exists(message_dir):
+        os.mkdir(message_dir)
+
+    message_path = os.path.join(message_dir, "workflow_done.txt")
+
+    with open(message_path, "w+") as messagefile:
+        messagefile.write(config["success_message"])
+
+
+module nested_1:
+    snakefile:
+        f"{workflow.basedir}/module_nested_1/Snakefile"
+    prefix:
+        "module_nested_1"
+
+
+use rule * from nested_1 as nested_1_*
+
+
+rule create_workflow_output:
+    output:
+        "workflow_output.txt",
+    params:
+        file_contents=config["file_contents"],
+    shell:
+        """
+        echo "{params.file_contents}" > {output}
+        """
+
+
+rule all:
+    input:
+        rules.nested_1_all.input,
+        workflow_output=rules.create_workflow_output.output[0],
+    default_target: True

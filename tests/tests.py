@@ -1697,6 +1697,8 @@ def test_module_no_prefixing_modified_paths():
         targets=["module2/test_final.txt"],
     )
 
+def test_module_onstart_onsuccess():
+    run(dpath("test_module_onstart_onsuccess"))
 
 @skip_on_windows
 def test_modules_prefix_local():

@@ -1,0 +1,64 @@
+"""
+Module nested within the top level Snakefile.
+"""
+
+import os
+import yaml
+
+config = {
+    "file_contents": "Output of module_nested_1.",
+    "success_message": "module_nested_1 finished successfully.",
+}
+
+
+onstart:
+    config_dir = "config"
+
+    if not os.path.exists(config_dir):
+        os.mkdir(config_dir)
+
+
+    config_path = os.path.join(config_dir, "module_nested_1_config.yaml")
+
+    with open(config_path, "w") as configfile:
+        yaml.dump(config, configfile)
+
+
+onsuccess:
+    message_dir = "success"
+
+    if not os.path.exists(message_dir):
+        os.mkdir(message_dir)
+
+    message_path = os.path.join(message_dir, "module_nested_1_done.txt")
+
+    with open(message_path, "w") as messagefile:
+        messagefile.write(config["success_message"])
+
+
+module nested_2:
+    snakefile:
+        f"{workflow.basedir}/module_nested_2/Snakefile"
+    prefix:
+        "output_nested_2"
+
+
+use rule * from nested_2 as nested_2_*
+
+
+rule create_workflow_output:
+    output:
+        "module_nested_1_output.txt",
+    params:
+        file_contents=config["file_contents"],
+    shell:
+        """
+        echo "{params.file_contents}" > {output}
+        """
+
+
+rule all:
+    input:
+        rules.nested_2_all.input,
+        workflow_output=rules.create_workflow_output.output[0],
+    default_target: True
