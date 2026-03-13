@@ -1,6 +1,28 @@
 rule a:
     output:
-        "test.txt"
+        "test.txt",
+    params:
+        # Param, file should be kept after incomplete runs.
+        "thread_info.txt",
     threads: 32
     shell:
-        "if [ {threads} -gt 1 ]; then touch {output}; else exit 1; fi"
+        """
+        echo "=== Thread and CPU Information ===" > {params[0]}
+        echo "Threads allocated by Snakemake: {threads}" >> {params[0]}
+        echo "" >> {params[0]}
+        echo "CPU affinity (taskset):" >> {params[0]}
+        taskset -cp $$ >> {params[0]} 2>&1 || echo "taskset command not available" >> {params[0]}
+        echo "" >> {params[0]}
+        echo "Number of processors (nproc):" >> {params[0]}
+        nproc >> {params[0]} 2>&1 || echo "nproc command not available" >> {params[0]}
+        echo "" >> {params[0]}
+        echo "CPUs online (/sys/devices/system/cpu/online):" >> {params[0]}
+        cat /sys/devices/system/cpu/online 2>/dev/null >> {params[0]} || echo "Not available" >> {params[0]}
+        echo "" >> {params[0]}
+        echo "Cpuset of current process (/proc/self/cpuset):" >> {params[0]}
+        cat /proc/self/cpuset 2>/dev/null >> {params[0]} || echo "Not available" >> {params[0]}
+        echo "" >> {params[0]}
+        echo "Status information from /proc/self/status:" >> {params[0]}
+        grep -E "Cpus_allowed|Cpus_allowed_list|Threads" /proc/self/status 2>/dev/null >> {params[0]} || echo "Not available" >> {params[0]}
+        if [ {threads} -gt 1 ]; then touch {output[0]}; else exit 1; fi
+        """
