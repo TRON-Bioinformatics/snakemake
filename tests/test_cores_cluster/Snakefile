@@ -1,6 +1,26 @@
 rule a:
     output:
-        "test.txt"
+        "test.txt",
+        "thread_info.txt"
     threads: 32
     shell:
-        "if [ {threads} -gt 1 ]; then touch {output}; else exit 1; fi"
+        """
+        if [ {threads} -gt 1 ]; then touch {output[0]}; else exit 1; fi
+        echo "=== Thread and CPU Information ===" > {output[1]}
+        echo "Threads allocated by Snakemake: {threads}" >> {output[1]}
+        echo "" >> {output[1]}
+        echo "CPU affinity (taskset):" >> {output[1]}
+        taskset -cp $$ >> {output[1]} 2>&1 || echo "taskset command not available" >> {output[1]}
+        echo "" >> {output[1]}
+        echo "Number of processors (nproc):" >> {output[1]}
+        nproc >> {output[1]} 2>&1 || echo "nproc command not available" >> {output[1]}
+        echo "" >> {output[1]}
+        echo "CPUs online (/sys/devices/system/cpu/online):" >> {output[1]}
+        cat /sys/devices/system/cpu/online 2>/dev/null >> {output[1]} || echo "Not available" >> {output[1]}
+        echo "" >> {output[1]}
+        echo "Cpuset of current process (/proc/self/cpuset):" >> {output[1]}
+        cat /proc/self/cpuset 2>/dev/null >> {output[1]} || echo "Not available" >> {output[1]}
+        echo "" >> {output[1]}
+        echo "Status information from /proc/self/status:" >> {output[1]}
+        grep -E "Cpus_allowed|Cpus_allowed_list|Threads" /proc/self/status 2>/dev/null >> {output[1]} || echo "Not available" >> {output[1]}
+        """
