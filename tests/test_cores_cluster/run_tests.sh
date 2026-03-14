@@ -76,7 +76,7 @@ export slurm_cmd="snakemake \
 export cluster_generic_cmd="snakemake \
  --snakefile $(realpath ./Snakefile) \
  --executor cluster-generic \
- --cluster-generic-submit-cmd \"sbatch --cpus-per-task {threads}\" \
+ --cluster-generic-submit-cmd \"sbatch --tasks-per-node {threads}\" \
  --cluster-generic-cancel-cmd \"scancel\" \
  --jobs 1 \
  --max-threads $max_threads \
